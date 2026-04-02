@@ -8,11 +8,16 @@ window.fetch = async (...args) => {
     if (token && typeof resource === 'string' && resource.startsWith('/api/')) {
         config.headers['Authorization'] = `Bearer ${token}`;
     }
-    const res = await originalFetch(resource, config);
-    if (res.status === 401 && resource !== '/api/login') {
-        document.getElementById('login-overlay').style.display = 'flex';
+    try {
+        const res = await originalFetch(resource, config);
+        if (res.status === 401 && resource !== '/api/login') {
+            document.getElementById('login-overlay').style.display = 'flex';
+        }
+        return res;
+    } catch (err) {
+        console.error(`Fetch error [${resource}]:`, err);
+        throw err;
     }
-    return res;
 };
 
 document.getElementById('btn-login').onclick = async () => {
@@ -127,13 +132,13 @@ const initCharts = () => {
 
     cpuChart = new Chart(cpuCtx, {
         type: 'line',
-        data: { labels: [], datasets: [{ label: 'CPU Usage %', data: cpuData, borderColor: '#58a6ff', tension: 0.4 }] },
+        data: { labels: labels, datasets: [{ label: 'CPU Usage %', data: cpuData, borderColor: '#58a6ff', tension: 0.4 }] },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
     });
 
     memChart = new Chart(memCtx, {
         type: 'line',
-        data: { labels: [], datasets: [{ label: 'Memory Usage (MB)', data: memData, borderColor: '#da3633', tension: 0.4 }] },
+        data: { labels: labels, datasets: [{ label: 'Memory Usage (MB)', data: memData, borderColor: '#da3633', tension: 0.4 }] },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
     });
 };
@@ -197,6 +202,13 @@ function switchTab(viewName) {
     if (viewName === 'files' && activeContainerId) fetchFiles('/');
     if (viewName === 'diff' && activeContainerId) fetchDiff();
     if (viewName === 'raw' && activeContainerId) fetchRawInspect();
+
+    if (viewName === 'logs' && autoScroll) {
+        setTimeout(() => { logViewer.scrollTop = logViewer.scrollHeight; }, 100);
+    }
+    if (viewName === 'stats' && cpuChart) {
+        setTimeout(() => { cpuChart.update(); memChart.update(); }, 100);
+    }
 }
 
 const fetchRawInspect = async () => {
@@ -710,13 +722,18 @@ window.deleteImage = async (id) => {
     }
 };
 
+let isFetchingContainers = false;
 const fetchContainers = async () => {
+    if (isFetchingContainers) return;
+    isFetchingContainers = true;
     try {
         const res = await fetch('/api/containers');
         containersData = await res.json();
         renderContainers();
     } catch (error) {
         console.error("Failed to fetch containers", error);
+    } finally {
+        isFetchingContainers = false;
     }
 };
 
@@ -864,7 +881,12 @@ socket.on('log', (chunk) => {
     logsContent.appendChild(div);
 
     if (autoScroll) {
-        logViewer.scrollTop = logViewer.scrollHeight;
+        setTimeout(() => {
+            const lastLine = logsContent.lastElementChild;
+            if (lastLine) {
+                lastLine.scrollIntoView({ behavior: 'auto', block: 'end' });
+            }
+        }, 50);
     }
 });
 

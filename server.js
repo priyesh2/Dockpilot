@@ -658,24 +658,47 @@ io.on('connection', (socket) => {
     const setupStats = async () => {
         try {
             statsStream = await container.stats({ stream: true });
+            let buffer = '';
             statsStream.on('data', chunk => {
-                try {
-                    const stats = JSON.parse(chunk.toString('utf8'));
-                    let cpuPercent = 0.0;
-                    const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-                    const systemCpuDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-                    if (systemCpuDelta > 0 && cpuDelta > 0) {
-                        const onlineCpus = stats.cpu_stats.online_cpus || (stats.cpu_stats.cpu_usage.percpu_usage ? stats.cpu_stats.cpu_usage.percpu_usage.length : 1);
-                        cpuPercent = (cpuDelta / systemCpuDelta) * onlineCpus * 100.0;
+                buffer += chunk.toString('utf8');
+                let lines = buffer.split('\n');
+                buffer = lines.pop(); // Keep partial line in buffer
+
+                lines.forEach(line => {
+                    const trimmed = line.trim();
+                    if (!trimmed) return;
+                    try {
+                        const stats = JSON.parse(trimmed);
+                        let cpuPercent = 0.0;
+                        
+                        if (stats.cpu_stats && stats.precpu_stats) {
+                            const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+                            const systemCpuDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+                            
+                            if (systemCpuDelta > 0 && cpuDelta > 0) {
+                                const onlineCpus = stats.cpu_stats.online_cpus || 
+                                    (stats.cpu_stats.cpu_usage.percpu_usage ? stats.cpu_stats.cpu_usage.percpu_usage.length : 1);
+                                cpuPercent = (cpuDelta / systemCpuDelta) * onlineCpus * 100.0;
+                            }
+                        }
+
+                        let memUsage = 0;
+                        if (stats.memory_stats && stats.memory_stats.usage) {
+                            memUsage = stats.memory_stats.usage;
+                        }
+
+                        socket.emit('stats', {
+                            cpu: cpuPercent.toFixed(2),
+                            memory: (memUsage / 1024 / 1024).toFixed(2)
+                        });
+                    } catch(e) {
+                        // This shouldn't happen with the line buffer, but safe to keep
                     }
-                    const memUsage = stats.memory_stats.usage;
-                    socket.emit('stats', {
-                        cpu: cpuPercent.toFixed(2),
-                        memory: (memUsage / 1024 / 1024).toFixed(2)
-                    });
-                } catch(e) {}
+                });
             });
-        } catch(error) {}
+        } catch(error) {
+            console.error('Stats stream error:', error);
+        }
     };
 
     setupLogs();
