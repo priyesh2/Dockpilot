@@ -9,6 +9,8 @@ Designed for single-node environments and local development orchestration.
   <img src="https://img.shields.io/badge/Docker-2CA5E0?style=for-the-badge&logo=docker&logoColor=white" />
 </p>
 
+![DockPilot Dashboard](assets/dashboard.png)
+
 ## ✨ Features
 
 - **Real-time Log Streaming** — Live container logs with filtering, pause/resume, and download
