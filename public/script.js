@@ -946,8 +946,19 @@ const performAction = async (action) => {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
         showToast(`Container ${action} success`);
-        // Refresh
-        setTimeout(fetchContainers, 1500);
+        
+        // If it's a lifecycle action, we should re-init logs and stats
+        if (['restart', 'start', 'stop'].includes(action)) {
+            setTimeout(() => {
+                if (socket.connected) {
+                    socket.disconnect();
+                    socket.connect();
+                }
+                fetchContainers();
+            }, 1000);
+        } else {
+            setTimeout(fetchContainers, 1500);
+        }
     } catch (err) {
         showToast(`Error: ${err.message}`, true);
     }
