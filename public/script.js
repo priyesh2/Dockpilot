@@ -321,6 +321,10 @@ const showMainView = (viewEl) => {
             welcomeMessage.style.display = 'block';
             document.getElementById('log-header').style.display = 'none';
             topTitle.textContent = 'Dashboard Overview';
+            
+            // Hide all tab views and footer since no container is active
+            Object.values(views).forEach(v => v && (v.style.display = 'none'));
+            if (typeof logFooter !== 'undefined' && logFooter) logFooter.style.display = 'none';
         } else {
             document.getElementById('log-header').style.display = 'flex';
             // Title is set in selectContainer
