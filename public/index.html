@@ -144,6 +144,7 @@
                             <option value="on-failure">On Failure</option>
                             <option value="unless-stopped">Unless Stopped</option>
                         </select>
+                        <button class="btn btn-sm" id="btn-close-container" style="margin-left: 10px; border-color: var(--border-color); color: var(--text-secondary);">✖ Close</button>
                     </div>
                 </div>
             </header>
@@ -279,7 +280,7 @@
                         <div style="width: 100%; height: 250px;"><canvas id="memChart"></canvas></div>
                     </div>
 
-                    <div id="raw-viewer" class="log-viewer" style="display: none; padding: 20px; overflow-y: auto;">
+                    <div id="raw-viewer" class="log-viewer" style="display: none; padding: 20px; overflow-y: auto; flex: 1; min-height: 0; height: 100%;">
                         <h3>Raw Inspect JSON</h3>
                         <pre id="raw-inspect-content" style="background: var(--bg-dark); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); font-size: 11px; color: var(--accent-color); overflow: auto;"></pre>
                     </div>

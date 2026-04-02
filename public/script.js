@@ -294,6 +294,12 @@ document.querySelectorAll('.view-tab').forEach(btn => {
     });
 });
 
+document.getElementById('btn-close-container').addEventListener('click', () => {
+    activeContainerId = null;
+    showMainView(logViewerWrapper); // Returns to dashboard welcome message
+    renderContainers(); // Untick active container in sidebar
+});
+
 
 const usersView = document.getElementById('users-view');
 const maintenanceView = document.getElementById('maintenance-view');
