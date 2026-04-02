@@ -63,9 +63,12 @@
             <div class="search-box" style="display: flex; flex-direction: column; gap: 8px;">
                 <select id="status-filter" style="width: 100%; background: var(--bg-dark); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 5px; font-size: 12px; height: 32px;">
                     <option value="all">All Statuses</option>
-                    <option value="running">Running Only</option>
-                    <option value="exited">Stopped Only</option>
-                    <option value="paused">Paused Only</option>
+                    <option value="running">Running</option>
+                    <option value="exited">Exited</option>
+                    <option value="paused">Paused</option>
+                    <option value="restarting">Restarting</option>
+                    <option value="created">Created</option>
+                    <option value="dead">Dead</option>
                 </select>
                 <input type="text" id="container-search" placeholder="Search containers...">
             </div>

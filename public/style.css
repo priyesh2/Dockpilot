@@ -102,15 +102,19 @@ body {
 }
 
 .status-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-radius: 50%;
     margin-right: 12px;
+    background-color: var(--text-secondary);
 }
-
 .status-dot.running { background-color: var(--green); box-shadow: 0 0 8px var(--green); }
 .status-dot.exited { background-color: var(--red); }
 .status-dot.created { background-color: var(--yellow); }
+.status-dot.restarting { background-color: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+.status-dot.paused { background-color: var(--accent-color); }
+.status-dot.dead { background-color: var(--red); }
+.status-dot.removing { background-color: var(--text-secondary); }
 
 .container-info-list {
     flex-grow: 1;
@@ -233,16 +237,23 @@ body {
 }
 
 .status-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    background-color: var(--bg-card);
-    border: 1px solid var(--border-color);
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: 1px solid var(--text-secondary);
+    color: var(--text-secondary);
 }
 
 .status-badge.running { color: var(--green); border-color: var(--green); }
 .status-badge.exited { color: var(--red); border-color: var(--red); }
+.status-badge.created { color: var(--yellow); border-color: var(--yellow); }
+.status-badge.restarting { color: var(--yellow); border-color: var(--yellow); }
+.status-badge.paused { color: var(--accent-color); border-color: var(--accent-color); }
+.status-badge.dead { color: var(--red); border-color: var(--red); }
+.status-badge.removing { color: var(--text-secondary); border-color: var(--text-secondary); }
 
 .stats-badges .badge {
     background-color: rgba(255, 255, 255, 0.05);
