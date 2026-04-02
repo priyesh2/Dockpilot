@@ -693,9 +693,16 @@ input:checked + .slider::before { transform: translateX(16px); }
     opacity: 0.8;
 }
 
-.developer-credit span {
+.developer-credit a {
     color: var(--accent-color);
     font-weight: 600;
+    text-decoration: none;
     text-shadow: 0 0 8px rgba(0, 240, 255, 0.3);
+    transition: all 0.2s;
+}
+
+.developer-credit a:hover {
+    color: var(--accent-hover);
+    text-shadow: 0 0 12px rgba(184, 41, 234, 0.5);
 }
 
