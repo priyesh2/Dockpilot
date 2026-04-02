@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log
+server.log
+server.js.bak
+users.json
+tmp-build-*
+.git
+.gemini
+brain
+.system_generated

@@ -1,0 +1,7 @@
+node_modules/
+server.log
+users.json
+.gemini/
+brain/
+.system_generated
+tmp-build-*
