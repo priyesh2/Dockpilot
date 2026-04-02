@@ -751,6 +751,16 @@ const renderContainers = () => {
         li.appendChild(infoList);
 
         containerList.appendChild(li);
+
+        // Sync active container state to header
+        if (c.Id === activeContainerId) {
+            const statusBadge = document.getElementById('current-container-status');
+            statusBadge.textContent = state.toUpperCase();
+            statusBadge.className = `status-badge ${state}`;
+            
+            // Show/hide stats depending on if running
+            document.getElementById('container-stats').style.display = (state === 'running') ? 'flex' : 'none';
+        }
     });
     updateBulkUI();
 };
