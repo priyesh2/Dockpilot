@@ -13,8 +13,12 @@ Designed for single-node environments and local development orchestration.
 
 ## ✨ Features
 
-- **Real-time Log Streaming** — Live container logs with filtering, pause/resume, and download
+- **Docker Compose Orchestration** — Deploy multi-container stacks directly from YAML definitions
+- **Real-time Log Streaming** — Live container logs with smart autoscrolling, filtering, and pause/resume
 - **Interactive Terminal** — Execute commands inside running containers via browser-based terminal (Xterm.js)
+- **Resource Constraints** — Fine-grained control over CPU (NanoCPUs) and Memory (Limits, Reservations, Swap)
+- **Advanced Configuration** — Custom hostname overrides and Privileged mode support
+- **Switchable Theme System** — 8+ premium UI themes for personalized orchestration
 - **Container Lifecycle** — Start, stop, restart, clone, rename, snapshot, and remove containers
 - **Image Management** — Build images from Dockerfiles, pull from Docker Hub, view layer history
 - **Volume & Network Management** — Create, list, and delete Docker volumes and bridge networks
@@ -23,6 +27,21 @@ Designed for single-node environments and local development orchestration.
 - **Live Host Stats** — Real-time CPU & memory charts per container (Chart.js)
 - **Bulk Operations** — Select multiple containers for batch start/stop/remove
 - **Activity Audit Log** — Track all user actions for security compliance
+
+## 🎨 Premium Themes
+
+DockPilot now features a dynamic theme engine with 8+ built-in styles to match your workspace aesthetics:
+
+- **Cyberpunk** — High-contrast neon cyan and purple
+- **Midnight** — Deep blue and indigo core
+- **Emerald** — Lush green and teal gradients
+- **Sunset** — Vibrant orange and red hues
+- **Aurora** — Mystical purple and cyan glow
+- **Rosegold** — Elegant pink and amber tones
+- **Ocean** — Serene sky blue and teal
+- **Dracula** — Classic dark purple and pink palette
+
+*Themes can be switched instantly from the dashboard footer.*
 
 ## 🚀 Quick Start (Docker - Recommended)
 
