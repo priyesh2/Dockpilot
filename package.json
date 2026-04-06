@@ -12,6 +12,7 @@
   "dependencies": {
     "dockerode": "^4.0.10",
     "express": "^4.19.2",
+    "js-yaml": "^4.1.1",
     "jsonwebtoken": "^9.0.3",
     "socket.io": "^4.8.3"
   }

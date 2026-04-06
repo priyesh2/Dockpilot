@@ -3,23 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DockPilot — Container Management Dashboard</title>
+    <title>DockPilot — Enterprise Container Management Dashboard</title>
+    <meta name="description" content="DockPilot is a premium enterprise container management dashboard for Docker.">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.min.css" />
 </head>
 <body>
+    <!-- Login Overlay -->
     <div id="login-overlay" class="login-overlay">
         <div class="login-box">
             <h2>Dock<span class="highlight">Pilot</span></h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 10px;">Please enter your credentials</p>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 10px;">Enterprise Container Management</p>
             <input type="text" id="login-username" placeholder="Username (default: admin)">
             <input type="password" id="login-password" placeholder="Password (default: admin)">
             <button id="btn-login" class="btn btn-primary" style="width: 100%;">Login</button>
             <div id="login-error" class="status-msg error" style="display:none; margin-top:10px;"></div>
         </div>
     </div>
-    
+
+    <!-- Command Palette -->
+    <div id="command-palette-overlay" class="command-palette-overlay">
+        <div class="command-palette">
+            <input type="text" id="command-palette-input" placeholder="Type a command... (containers, images, themes, actions)">
+            <div class="command-palette-results" id="command-palette-results"></div>
+            <div class="command-palette-footer">
+                <span><kbd>↑↓</kbd> Navigate</span>
+                <span><kbd>Enter</kbd> Execute</span>
+                <span><kbd>Esc</kbd> Close</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container Tooltip (positioned via JS) -->
+    <div id="container-tooltip" class="container-tooltip" style="display: none;"></div>
+
     <div class="app-container">
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -41,12 +59,21 @@
                     <button id="nav-images" class="btn btn-primary btn-sm admin-only" title="Manage Images" style="background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
                     </button>
+                    <button id="nav-networks" class="btn btn-primary btn-sm admin-only" title="Manage Networks" style="background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="3"/><circle cx="5" cy="19" r="3"/><circle cx="19" cy="19" r="3"/><line x1="12" y1="8" x2="5" y2="16"/><line x1="12" y1="8" x2="19" y2="16"/></svg>
+                    </button>
+                    <button id="nav-sysmonitor" class="btn btn-primary btn-sm admin-only" title="System Monitor" style="background-color: var(--bg-card); color: var(--text-primary); border-color: var(--border-color); width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    </button>
                     <button id="btn-run-cmd-sidebar" class="btn btn-primary btn-sm admin-only" title="Run Container" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; background: var(--accent-gradient);">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     </button>
+                    <button id="btn-compose-sidebar" class="btn btn-primary btn-sm admin-only" title="Deploy Compose Stack" style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--green), var(--accent-color));">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="8" height="8" rx="1"/><rect x="14" y="2" width="8" height="8" rx="1"/><rect x="8" y="14" width="8" height="8" rx="1"/><line x1="6" y1="10" x2="6" y2="14"/><line x1="18" y1="10" x2="18" y2="14"/><line x1="6" y1="14" x2="12" y2="14"/><line x1="18" y1="14" x2="12" y2="14"/></svg>
+                    </button>
                 </div>
             </div>
-            
+
             <div id="global-stats" class="global-stats" style="padding: 15px; border-bottom: 1px solid var(--border-color); background: rgba(0, 240, 255, 0.05); font-size: 11px;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                     <span style="color: var(--text-secondary);">HOST HEALTH</span>
@@ -55,7 +82,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
                     <div>🐳 <span id="total-containers">0</span> Container</div>
                     <div>📀 <span id="total-images">0</span> Image</div>
-                    <div>🧠 <span id="total-mem">0</span> GB Rom</div>
+                    <div>🧠 <span id="total-mem">0</span> GB Ram</div>
                     <div>💻 <span id="total-cpu">0</span> Core</div>
                 </div>
             </div>
@@ -72,7 +99,7 @@
                 </select>
                 <input type="text" id="container-search" placeholder="Search containers...">
             </div>
-            
+
             <div id="bulk-actions" class="admin-only" style="display: none; padding: 10px; border-bottom: 1px solid var(--border-color); justify-content: space-between; align-items: center; background: var(--bg-card);">
                 <span style="font-size: 12px; color: var(--text-secondary);"><span id="bulk-count">0</span> selected</span>
                 <div style="display: flex; gap: 5px;">
@@ -92,22 +119,56 @@
             </ul>
 
             <div style="padding: 10px; border-top: 1px solid var(--border-color); margin-top: auto;">
+                <div class="theme-switcher">
+                    <div class="theme-dot active" data-theme="cyberpunk" title="Cyberpunk"></div>
+                    <div class="theme-dot" data-theme="midnight" title="Midnight Blue"></div>
+                    <div class="theme-dot" data-theme="emerald" title="Emerald Dark"></div>
+                    <div class="theme-dot" data-theme="sunset" title="Sunset Warm"></div>
+                    <div class="theme-dot" data-theme="aurora" title="Aurora Borealis"></div>
+                    <div class="theme-dot" data-theme="rosegold" title="Rose Gold"></div>
+                    <div class="theme-dot" data-theme="ocean" title="Ocean Deep"></div>
+                    <div class="theme-dot" data-theme="dracula" title="Dracula"></div>
+                </div>
                 <div class="developer-credit">
                     Developed by <a href="https://github.com/priyesh2" target="_blank" title="View Github Profile">Priyesh</a>
                 </div>
                 <button id="btn-logout" class="btn btn-sm" style="width: 100%; background: rgba(255, 0, 85, 0.15); border-color: var(--red); color: var(--red);">🚪 Logout</button>
             </div>
         </aside>
-        
+
         <main class="main-content">
             <header class="topbar">
                 <div class="topbar-main">
                     <div id="top-context-title" style="font-weight: 600; font-size: 1.1rem; color: var(--text-secondary);">Dashboard Overview</div>
-                    
+
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <div id="container-stats" class="stats-badges" style="display: none; gap: 10px;">
                             <div class="badge">CPU <span id="stat-cpu">0.00</span>%</div>
                             <div class="badge">MEM <span id="stat-mem">0.00</span>MB</div>
+                        </div>
+
+                        <!-- Session Info -->
+                        <div class="session-info" id="session-info" style="display: none;">
+                            <div class="user-avatar" id="user-avatar">A</div>
+                            <div>
+                                <div id="session-username" style="font-weight: 600; color: var(--text-primary); font-size: 12px;">admin</div>
+                                <div class="session-timer" id="session-timer">24:00:00</div>
+                            </div>
+                        </div>
+
+                        <!-- Notification Bell -->
+                        <div class="notification-bell" id="notification-bell">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            <span class="notification-count" id="notification-count" style="display: none;">0</span>
+                            <div class="notification-dropdown" id="notification-dropdown">
+                                <div class="notification-dropdown-header">
+                                    <span>Notifications</span>
+                                    <button class="btn btn-sm" id="btn-mark-read" style="font-size: 10px; padding: 2px 8px;">Mark all read</button>
+                                </div>
+                                <div class="notification-dropdown-list" id="notification-list">
+                                    <div style="padding: 20px; text-align: center; color: var(--text-secondary); font-size: 12px;">No notifications</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -116,6 +177,7 @@
                     <div class="container-info">
                         <h3 id="current-container-name" style="margin: 0; font-size: 1rem;">Container</h3>
                         <div id="current-container-status" class="status-badge">OFFLINE</div>
+                        <div id="current-container-health" class="status-badge" style="display: none;">NONE</div>
                     </div>
 
                     <div class="view-tabs">
@@ -138,6 +200,9 @@
                             <button class="btn action-btn bg-dark" id="btn-snapshot" title="Snapshot">📸</button>
                             <button class="btn action-btn bg-dark" id="btn-rename" title="Rename">✏️</button>
                             <button class="btn action-btn bg-dark" id="btn-clone" title="Clone">👯</button>
+                            <button class="btn action-btn bg-dark" id="btn-notes" title="Notes">📝</button>
+                            <button class="btn action-btn bg-dark" id="btn-export" title="Export Config">📋</button>
+                            <button class="btn action-btn bg-dark" id="btn-resources" title="Resource Limits">📈</button>
                             <button class="btn action-btn bg-dark" id="btn-remove" title="Remove">🗑</button>
                         </div>
                         <select id="update-restart-policy" class="btn-sm" style="background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 6px; padding: 5px; width: 100px;">
@@ -165,7 +230,7 @@
                     </div>
                     <div class="search-bar-hub">
                         <input type="text" id="hub-search" placeholder="Search Docker Hub (e.g. nginx, redis)...">
-                        <button class="btn btn-sm btn-primary" id="btn-hub-search">Search Hub</button>
+                        <button class="btn btn-sm btn-primary" id="btn-hub-search" style="margin-top: 8px;">Search Hub</button>
                     </div>
                     <div id="hub-results" style="margin-bottom: 20px;"></div>
                     <div class="images-grid" id="images-grid"></div>
@@ -185,16 +250,53 @@
                     <div id="volumes-grid" class="images-grid"></div>
                 </div>
 
+                <div id="networks-view" class="main-panel" style="display: none;">
+                    <div class="panel-header">
+                        <h2>Network Management</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm" id="btn-close-networks">Close</button>
+                        </div>
+                    </div>
+                    <div class="search-bar-hub">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="new-network-name-panel" placeholder="New network name..." style="flex-grow: 1;">
+                            <select id="new-network-driver" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--bg-dark); color: white;">
+                                <option value="bridge">Bridge</option>
+                                <option value="host">Host</option>
+                                <option value="overlay">Overlay</option>
+                                <option value="macvlan">Macvlan</option>
+                            </select>
+                            <button class="btn btn-sm btn-primary" id="btn-create-network-panel">Create Network</button>
+                        </div>
+                    </div>
+                    <div id="networks-table-container" style="overflow-x: auto;"></div>
+                </div>
+
+                <div id="sysmonitor-view" class="main-panel" style="display: none;">
+                    <div class="panel-header">
+                        <h2>System Resource Monitor</h2>
+                        <button class="btn btn-sm" id="btn-close-sysmonitor">Close</button>
+                    </div>
+                    <div id="sysmonitor-content" style="display: flex; flex-direction: column; gap: 24px;">
+                        <div class="stat-cards" id="sysmonitor-cards"></div>
+                        <div class="dashboard-chart-card">
+                            <h3>Disk Usage Breakdown</h3>
+                            <div class="disk-bars" id="disk-bars"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="users-view" class="main-panel" style="display: none;">
                     <div class="panel-header">
                         <h2>User Management</h2>
                         <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-sm" id="btn-show-password-modal" style="border-color: var(--yellow); color: var(--yellow);">🔑 Change Password</button>
                             <button class="btn btn-sm" id="btn-close-users">Close</button>
                         </div>
                     </div>
                     <div class="add-user-form">
                         <h4>Add New User</h4>
-                        <div style="display: flex; gap: 10px;">
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
                             <input type="text" id="new-username" placeholder="Username">
                             <input type="password" id="new-password" placeholder="Password">
                             <select id="new-role">
@@ -237,14 +339,18 @@
                 <!-- Container Views -->
                 <div class="log-viewer-container" id="log-viewer-wrapper" style="display: flex; height: 100%; flex-direction: column;">
                     <div id="welcome-message" class="welcome-message">
-                        <div class="icon">🐳</div>
-                        <h2>Select a container to view logs</h2>
-                        <p>Real-time log streaming and management interface</p>
+                        <!-- Dashboard Overview Rendered by JS -->
                     </div>
-                    
+
                     <div id="log-viewer" class="log-viewer" style="display: none; flex-direction: column; padding: 0; min-height: 0;">
                         <div class="log-filter-bar">
-                            <input type="text" id="log-filter" placeholder="Filter logs (e.g. error, warn)...">
+                            <input type="text" id="log-filter" placeholder="Filter logs (text or /regex/)...">
+                            <button class="regex-toggle" id="regex-toggle" title="Toggle Regex Mode">.*</button>
+                            <span class="match-info" id="match-info"></span>
+                            <div class="match-nav">
+                                <button id="btn-match-prev" title="Previous Match">↑</button>
+                                <button id="btn-match-next" title="Next Match">↓</button>
+                            </div>
                         </div>
                         <div id="logs" class="logs-content"></div>
                     </div>
@@ -277,7 +383,7 @@
                         </div>
                         <div id="terminal-viewer" style="background: #000; padding: 10px; flex-grow: 1; min-height: 0;"></div>
                     </div>
-                    
+
                     <div id="stats-viewer" class="log-viewer" style="display: none; padding: 20px; flex-direction: column; gap: 20px;">
                         <div style="width: 100%; height: 250px;"><canvas id="cpuChart"></canvas></div>
                         <div style="width: 100%; height: 250px;"><canvas id="memChart"></canvas></div>
@@ -346,16 +452,63 @@
                         <button type="button" id="btn-create-network" class="btn btn-sm btn-primary">Create</button>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label>Resource Limits (Optional)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <input type="text" id="run-cpus" placeholder="CPUs (e.g. 0.5, 1, 2)">
+                            <small>Number of CPUs (e.g. 0.5 = half a core)</small>
+                        </div>
+                        <div>
+                            <input type="text" id="run-memory" placeholder="Memory (e.g. 256m, 1g)">
+                            <small>Memory limit (e.g. 512m, 1g, 2g)</small>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                        <div>
+                            <input type="text" id="run-cpu-shares" placeholder="CPU Shares (default: 1024)">
+                            <small>Relative CPU weight (default 1024)</small>
+                        </div>
+                        <div>
+                            <input type="text" id="run-mem-reservation" placeholder="Mem Reservation (e.g. 128m)">
+                            <small>Soft memory limit</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Advanced Options (Optional)</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <input type="text" id="run-hostname" placeholder="Hostname">
+                            <small>Custom hostname for the container</small>
+                        </div>
+                        <div>
+                            <input type="text" id="run-command" placeholder="Command override">
+                            <small>Override CMD (e.g. /bin/sh -c 'echo hi')</small>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px; color: var(--text-primary); font-size: 13px;">
+                        <input type="checkbox" id="run-privileged" style="width: 16px; height: 16px;">
+                        <label for="run-privileged">Privileged Mode</label>
+                        <span style="color: var(--red); font-size: 11px; margin-left: 8px;">⚠️ Full host access</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--text-primary); font-size: 13px;">
+                        <input type="checkbox" id="run-auto-remove" style="width: 16px; height: 16px;">
+                        <label for="run-auto-remove">Auto-remove when stopped</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; color: var(--text-primary); font-size: 13px;">
+                        <input type="checkbox" id="run-tty" style="width: 16px; height: 16px;" checked>
+                        <label for="run-tty">Allocate TTY (interactive)</label>
+                    </div>
+                </div>
                 <div class="form-group admin-only">
                     <label for="restart-policy">Restart Policy</label>
-                    <div style="display: flex; gap: 10px;">
-                        <select id="restart-policy" style="flex-grow: 1;">
-                            <option value="none">None</option>
-                            <option value="always">Always</option>
-                            <option value="on-failure">On Failure</option>
-                            <option value="unless-stopped">Unless Stopped</option>
-                        </select>
-                    </div>
+                    <select id="restart-policy" style="flex-grow: 1;">
+                        <option value="none">None</option>
+                        <option value="always">Always</option>
+                        <option value="on-failure">On Failure</option>
+                        <option value="unless-stopped">Unless Stopped</option>
+                    </select>
                 </div>
                 <div class="form-actions">
                     <button id="btn-submit-run" class="btn btn-primary">Run Container</button>
@@ -366,7 +519,7 @@
         </div>
     </div>
 
-    <!-- Custom Delete Modal -->
+    <!-- Delete Modal -->
     <div id="delete-modal" class="modal">
         <div class="modal-content" style="width: 400px;">
             <div class="modal-header">
@@ -383,7 +536,7 @@
         </div>
     </div>
 
-    <!-- Modal for Image History -->
+    <!-- Image History Modal -->
     <div id="history-modal" class="modal">
         <div class="modal-content" style="width: 700px;">
             <div class="modal-header">
@@ -396,7 +549,7 @@
         </div>
     </div>
 
-    <!-- Modal for Build Image -->
+    <!-- Build Image Modal -->
     <div id="build-modal" class="modal">
         <div class="modal-content" style="width: 800px;">
             <div class="modal-header">
@@ -404,15 +557,15 @@
                 <button class="close-build-btn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="modal-grid" style="grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="modal-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                     <div>
-                        <label>Image Tag (e.g. my-app:latest)</label>
-                        <input type="text" id="build-tag" placeholder="my-custom-image:latest" style="width:100%; margin-bottom: 15px;">
-                        <label>Dockerfile</label>
-                        <textarea id="build-dockerfile" style="width:100%; height: 300px; font-family: 'Fira Code', monospace; background: var(--bg-dark); color: var(--accent-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; resize: none;" spellcheck="false">FROM alpine
+                        <label style="color: var(--accent-color); font-weight: 600; font-size: 0.85rem;">Image Tag (e.g. my-app:latest)</label>
+                        <input type="text" id="build-tag" placeholder="my-custom-image:latest" style="width:100%; margin: 8px 0 15px 0; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                        <label style="color: var(--accent-color); font-weight: 600; font-size: 0.85rem;">Dockerfile</label>
+                        <textarea id="build-dockerfile" style="width:100%; height: 300px; font-family: 'Fira Code', monospace; background: var(--bg-dark); color: var(--accent-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px; resize: none; margin-top: 8px;" spellcheck="false">FROM alpine
 RUN apk add --no-cache curl
 CMD ["echo", "Hello from DockPilot Build!"]</textarea>
-                        
+
                         <div style="margin-top: 15px; display: flex; align-items: center; gap: 8px; color: var(--text-primary); font-size: 13px;">
                             <input type="checkbox" id="build-run-after" style="width: 16px; height: 16px;">
                             <label for="build-run-after">Run container after successful build</label>
@@ -421,8 +574,8 @@ CMD ["echo", "Hello from DockPilot Build!"]</textarea>
                         <button class="btn btn-lg btn-primary" id="btn-start-build" style="width: 100%; margin-top: 15px; background: var(--accent-gradient);">Build Image</button>
                     </div>
                     <div style="display: flex; flex-direction: column;">
-                        <label>Build Log</label>
-                        <div id="build-log-container" style="flex-grow: 1; background: #000; border: 1px solid var(--border-color); padding: 10px; font-family: 'Fira Code', monospace; font-size: 11px; color: #0f0; overflow-y: auto; height: 350px;">
+                        <label style="color: var(--accent-color); font-weight: 600; font-size: 0.85rem;">Build Log</label>
+                        <div id="build-log-container" style="flex-grow: 1; background: #000; border: 1px solid var(--border-color); padding: 10px; font-family: 'Fira Code', monospace; font-size: 11px; color: #0f0; overflow-y: auto; height: 350px; margin-top: 8px; border-radius: 8px;">
                             <div id="build-log-content">Waiting for build to start...</div>
                         </div>
                     </div>
@@ -431,6 +584,7 @@ CMD ["echo", "Hello from DockPilot Build!"]</textarea>
         </div>
     </div>
 
+    <!-- Password Modal -->
     <div id="password-modal" class="modal">
         <div class="modal-content" style="width: 400px;">
             <div class="modal-header">
@@ -438,13 +592,121 @@ CMD ["echo", "Hello from DockPilot Build!"]</textarea>
                 <button class="close-password-btn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
             </div>
             <div class="modal-body">
-                <label>Old Password</label>
-                <input type="password" id="change-old-password" placeholder="Current password" style="width:100%; margin-bottom: 15px;">
-                <label>New Password</label>
-                <input type="password" id="change-new-password" placeholder="New password" style="width:100%; margin-bottom: 15px;">
+                <label style="color: var(--accent-color); font-weight: 600; font-size: 0.85rem;">Old Password</label>
+                <input type="password" id="change-old-password" placeholder="Current password" style="width:100%; margin: 8px 0 15px 0; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
+                <label style="color: var(--accent-color); font-weight: 600; font-size: 0.85rem;">New Password</label>
+                <input type="password" id="change-new-password" placeholder="New password" style="width:100%; margin: 8px 0 15px 0; padding: 10px; background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-primary);">
                 <button class="btn btn-lg btn-primary" id="btn-submit-password" style="width: 100%; margin-top: 10px; background: var(--accent-gradient);">Update Password</button>
             </div>
         </div>
+    </div>
+
+    <!-- Compose Deploy Modal -->
+    <div id="compose-modal" class="modal">
+        <div class="modal-content" style="width: 700px;">
+            <div class="modal-header">
+                <h3>📦 Docker Compose Deploy</h3>
+                <button class="close-compose-btn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Project Name</label>
+                    <input type="text" id="compose-project" placeholder="my-stack" value="dockpilot">
+                </div>
+                <div class="form-group">
+                    <label>Paste docker-compose.yml</label>
+                    <textarea id="compose-yaml" style="width:100%; height: 320px; font-family: 'Fira Code', monospace; background: var(--bg-dark); color: var(--accent-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; resize: none; font-size: 12px;" spellcheck="false">version: '3'
+services:
+  web:
+    image: nginx:latest
+    ports:
+      - "8080:80"
+    cpus: 0.5
+    mem_limit: 256m
+    mem_reservation: 128m
+    restart: unless-stopped
+  redis:
+    image: redis:alpine
+    cpus: 1
+    mem_limit: 512m
+    cpu_shares: 512</textarea>
+                    <small style="margin-top: 8px; display: block;">Supports: <code>cpus</code>, <code>cpu_shares</code>, <code>mem_limit</code>, <code>mem_reservation</code>, <code>command</code>, <code>entrypoint</code>, <code>hostname</code>, <code>privileged</code>, <code>working_dir</code>, <code>healthcheck</code>, <code>deploy.resources.limits</code></small>
+                </div>
+                <button class="btn btn-primary" id="btn-compose-deploy" style="width: 100%; background: var(--accent-gradient);">🚀 Deploy Stack</button>
+                <div id="compose-results" class="compose-results"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Limits Modal -->
+    <div id="resources-modal" class="modal">
+        <div class="modal-content" style="width: 450px;">
+            <div class="modal-header">
+                <h3>📈 Resource Limits</h3>
+                <button class="close-resources-btn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" id="resources-modal-body">
+                <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 15px;">Adjust CPU and memory limits for this container.</p>
+                <div class="form-group">
+                    <label>CPU Shares (default: 1024)</label>
+                    <input type="number" id="res-cpu-shares" placeholder="1024" value="1024">
+                    <small>Relative weight. Higher = more CPU time.</small>
+                </div>
+                <div class="form-group">
+                    <label>Memory Limit (bytes, 0 = unlimited)</label>
+                    <input type="number" id="res-memory" placeholder="0" value="0">
+                    <small>e.g. 536870912 = 512MB</small>
+                </div>
+                <div class="form-group">
+                    <label>Memory Reservation (bytes)</label>
+                    <input type="number" id="res-memory-reservation" placeholder="0" value="0">
+                    <small>Soft limit</small>
+                </div>
+                <button class="btn btn-primary" id="btn-save-resources" style="width: 100%; background: var(--accent-gradient);">Save Limits</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes Modal -->
+    <div id="notes-modal" class="modal">
+        <div class="modal-content" style="width: 450px;">
+            <div class="modal-header">
+                <h3>📝 Container Notes</h3>
+                <button class="close-notes-btn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body notes-container">
+                <p style="color: var(--text-secondary); font-size: 12px; margin-bottom: 12px;">Add personal notes for this container. Saved locally.</p>
+                <textarea id="container-notes" placeholder="Write notes about this container..."></textarea>
+                <button class="btn btn-primary" id="btn-save-notes" style="width: 100%; margin-top: 12px; background: var(--accent-gradient);">Save Notes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Config Modal -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content" style="width: 550px;">
+            <div class="modal-header">
+                <h3>📋 Import Container Config</h3>
+                <button class="close-import-btn" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Paste exported JSON config</label>
+                    <textarea id="import-json" style="width:100%; height: 250px; font-family: 'Fira Code', monospace; background: var(--bg-dark); color: var(--accent-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; resize: none; font-size: 11px;" spellcheck="false" placeholder='{"Image": "nginx:latest", ...}'></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Container Name (Optional)</label>
+                    <input type="text" id="import-name" placeholder="my-imported-container">
+                </div>
+                <button class="btn btn-primary" id="btn-import-config" style="width: 100%; background: var(--accent-gradient);">🚀 Create Container</button>
+                <div id="import-status" class="status-msg"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcut Hint -->
+    <div class="shortcut-hint" id="shortcut-hint">
+        Press <kbd>Ctrl</kbd>+<kbd>K</kbd> for command palette
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
